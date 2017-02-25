@@ -1,13 +1,13 @@
 <?php
 /**
- * Title: Application for download (with auth) files from Bitrix sites
+ * Title: Application for download (with auth) files from sites
  * Author: Aleksandr Novikov
  * Email: pwsdotru@gmail.com
  * WWW: http://pwsdotru.com/
- * GIT: https://github.com/pwsdotru/bitrix_downloader
+ * GIT: https://github.com/pwsdotru/downloader
  */
-define("VERSION", "1.0");
-define("APP_NAME", "Bitrix Downloader");
+define("VERSION", "1.1");
+define("APP_NAME", "Downloader");
 
 error_reporting(E_ALL);
 
@@ -17,7 +17,8 @@ $params = array(
   "d|debug" => "Display debug information",
   "u|user=USERNAME" => "Username for login to site",
   "p|password=PASSWORD" => "Password for user",
-  "o|out=FILE" => "Filename for save file"
+  "o|out=FILE" => "Filename for save file",
+	"c|config=FILE" => "Filename to config file for aucth params"
 );
 $script_filename = basename($argv[0]);
 
@@ -26,12 +27,20 @@ if ($argc <= 1) {
   show_banner($script_filename, $params);
 } else {
   $arguments = parse_arguments($argv, $keys = parse_keys($params));
+	if (isset($arguments["d"]) || isset($arguments["debug"])) {
+		define("DEBUG_MODE", true);
+		debug_out("Turn debug mode to on");
+	} else {
+		define("DEBUG_MODE", false);
+	}
   if ($arguments && is_array($arguments) && count($arguments) > 0) {
     if (isset($arguments["h"]) || isset($arguments["help"])) {
       show_banner($script_filename, $params, false);
-    }elseif (isset($arguments["v"]) || isset($arguments["version"])) {
+    } elseif (isset($arguments["v"]) || isset($arguments["version"])) {
       show_version();
-    }
+    } else {
+	      debug_out("Parsed arguments", $arguments);
+	  }
   } else {
     show_banner($script_filename, $params);
   }
@@ -139,4 +148,22 @@ function print_params($params) {
     $out .= "\n";
   }
   return $out;
+}
+
+/**
+ * Output debug message
+ * @param string $str - string for out
+ * @param mixed $var - variable for dump
+ */
+function debug_out($str, $var = null) {
+	if (defined("DEBUG_MODE") && DEBUG_MODE === true) {
+		echo(". " . $str . "\n");
+		if ($var !== null) {
+			$out = explode("\n", print_r($var, true));
+			foreach($out AS $o) {
+				echo(". " . $o . "\n");
+			}
+			echo("\n");
+		}
+	}
 }
