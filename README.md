@@ -1,4 +1,4 @@
-# Bitrix Downloader
-Application for download (with auth) files from Bitrix sites
+# Downloader
+Application for download (with auth) files from sites
 
 
