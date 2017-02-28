@@ -39,7 +39,15 @@ if ($argc <= 1) {
     } elseif (isset($arguments["v"]) || isset($arguments["version"])) {
       show_version();
     } else {
-	      debug_out("Parsed arguments", $arguments);
+	    debug_out("Parsed arguments", $arguments);
+	    $url = $argv[$argc - 1];
+	    debug_out("Download url: " . $url);
+	    $data = download_url($url);
+	    if ($data !== null && $data == "") {
+		    debug_out("Download success. Try save");
+	    } else {
+		    debug_out("Download fail. Try login and download again");
+	    }
 	  }
   } else {
     show_banner($script_filename, $params);
@@ -166,4 +174,64 @@ function debug_out($str, $var = null) {
 			echo("\n");
 		}
 	}
+}
+
+/**
+ * Download file.
+ * @param $url - URL to file
+ *
+ * @return null|string Return null on error or string with file
+ */
+function download_url($url) {
+	$data = null;
+	$download = make_request($url);
+	print_r($download);
+	if ($download["success"] && $download["info"]["content_type"] != "text/html") {
+		$data = $download["data"];
+	} else {
+		debug_out("Can't download file: ", $download["info"]);
+	}
+	return $data;
+}
+
+/**
+ * Process HTTP request
+ * @param $url - URL
+ * @param string $method Request method ("post" or "get")
+ * @param array $params - Array with params for get or form data for post
+ *
+ * @return array
+ *  bool "success" - true when get 200 status
+ *  array "info" - array with status
+ *  null|string "data" - body of response
+ */
+function make_request($url, $method = "get", $params = array()) {
+
+	$return = array("data" => null, "info" => null, "success" => false);
+	$ch = curl_init();
+
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+	if ($method == "post") {
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_POST, 1);
+	} else {
+		if (is_array($params) && count($params) > 0) {
+			$url .=  "?" . build_query($params);
+		}
+		curl_setopt($ch, CURLOPT_URL, $url);
+	}
+
+	$data = curl_exec($ch);
+	$info = curl_getinfo($ch);
+
+	$return["info"]    = $info;
+
+  if ($info["http_code"] == 200) {
+	  $return["data"]    = $data;
+	  $return["success"] = true;
+  }
+	curl_close ($ch);
+
+	return $return;
 }
