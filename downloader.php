@@ -41,10 +41,21 @@ if ($argc <= 1) {
     } else {
 	    debug_out("Parsed arguments", $arguments);
 	    $url = $argv[$argc - 1];
+	    if (isset($arguments["o"])) {
+		    $output_file = $arguments["o"];
+	    } else {
+		    $output_file = tempnam("", "download_");
+	    }
+	    echo("Download to: " . $output_file . "\n");
 	    debug_out("Download url: " . $url);
 	    $data = download_url($url);
 	    if ($data !== null && $data !== "") {
 		    debug_out("Download success. Try save");
+		    if (save_file($data, $output_file)) {
+			    echo("Done\n");
+		    } else {
+			    echo("ERROR: Can't save file " . $output_file . "\n");
+		    }
 	    } else {
 		    debug_out("Download fail. Try login and download again");
 		    if (isset($arguments["c"])) {
@@ -58,9 +69,14 @@ if ($argc <= 1) {
 						    $data = download_url($url);
 						    if ($data !== null && $data !== "") {
 							    debug_out("Download success. Try save");
+							    if (save_file($data, $output_file)) {
+								    echo("Done\n");
+							    } else {
+								    echo("ERROR: Can't save file " . $output_file . "\n");
+							    }
 						    } else {
 							    debug_out("Can't download again");
-							    echo("ERROR: Can't download");
+							    echo("ERROR: Can't download\n");
 						    }
 					    } else {
 						    echo("ERROR: Invalid login\n");
@@ -244,6 +260,18 @@ function make_login($username, $password, $params) {
 		return true;
 	}
 	return false;
+}
+
+/**
+ * Savedata to file
+ * @param $data - Data
+ * @param $filename - Filename for save
+ *
+ * @return bool - true if success
+ */
+function save_file($data, $filename) {
+	$result = boolval(file_put_contents($filename, $data));
+	return $result;
 }
 /**
  * Process HTTP request
