@@ -232,6 +232,7 @@ function download_url($url) {
 		$data = $download["data"];
 	} else {
 		debug_out("Can't download file: ", $download["info"]);
+		debug_out($download["data"]);
 	}
 	return $data;
 }
@@ -270,8 +271,11 @@ function make_login($username, $password, $params) {
  * @return bool - true if success
  */
 function save_file($data, $filename) {
-	$result = boolval(file_put_contents($filename, $data));
-	return $result;
+	$result = file_put_contents($filename, $data);
+	if (intval($result) == 0) {
+		return false;
+	}
+	return true;
 }
 /**
  * Process HTTP request
