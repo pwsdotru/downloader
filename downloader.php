@@ -43,7 +43,7 @@ if ($argc <= 1) {
 	    $url = $argv[$argc - 1];
 	    debug_out("Download url: " . $url);
 	    $data = download_url($url);
-	    if ($data !== null && $data == "") {
+	    if ($data !== null && $data !== "") {
 		    debug_out("Download success. Try save");
 	    } else {
 		    debug_out("Download fail. Try login and download again");
@@ -52,13 +52,27 @@ if ($argc <= 1) {
 			    if (file_exists($config_file)) {
 				    $settings = parse_ini_file($config_file);
 				    debug_out("Login settings: ", $settings);
+				    if (isset($arguments["u"]) && isset($arguments["p"])) {
+					    if (make_login($arguments["u"], $arguments["p"], $settings)) {
+						    debug_out("Login success");
+						    $data = download_url($url);
+						    if ($data !== null && $data !== "") {
+							    debug_out("Download success. Try save");
+						    } else {
+							    debug_out("Can't download again");
+							    echo("ERROR: Can't download");
+						    }
+					    } else {
+						    echo("ERROR: Invalid login\n");
+					    }
+				    } else {
+					    echo("ERROR: Can't login. You should set login and password\n");
+				    }
 			    } else {
-				    echo("ERROR: Not found config file " . $config_file);
-				    exit();
+				    echo("ERROR: Not found config file " . $config_file . "\n");
 			    }
 		    } else {
 			    echo("ERROR: Can't login. Need config file for information\n");
-			    exit();
 		    }
 	    }
 	  }
@@ -207,6 +221,31 @@ function download_url($url) {
 }
 
 /**
+ * Make login to site
+ * @param $username - Username
+ * @param $password - Password
+ * @param $params - Login settings
+ *
+ * @return bool - return true on success
+ */
+function make_login($username, $password, $params) {
+	$form = array();
+	$form[$params["username_field"]] = $username;
+	$form[$params["password_field"]] = $password;
+	if ($params["hash_password"]) {
+		$form[$params["password_hash"]] = md5($password);
+	}
+	if ($params["need_submit"]) {
+		$form[$params["submit_field"]] = $params["submit_value"];
+	}
+	debug_out("Login form: ", $form);
+	$login = make_request($params["login_url"], "post", $form);
+	if ($login["success"]) {
+		return true;
+	}
+	return false;
+}
+/**
  * Process HTTP request
  * @param $url - URL
  * @param string $method Request method ("post" or "get")
@@ -224,18 +263,24 @@ function make_request($url, $method = "get", $params = array()) {
 	}
 	$return = array("data" => null, "info" => null, "success" => false);
 
+	$method = strtolower($method);
+
 	$ch = curl_init();
 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt ($ch, CURLOPT_COOKIEJAR, $cookie_file);
 	curl_setopt ($ch, CURLOPT_COOKIEFILE, $cookie_file);
 
+	if (defined("DEBUG_MODE") && DEBUG_MODE) {
+		curl_setopt($ch, CURLOPT_VERBOSE, true);
+	}
 	if ($method == "post") {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_POST, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
 	} else {
 		if (is_array($params) && count($params) > 0) {
-			$url .=  "?" . build_query($params);
+			$url .=  "?" . http_build_query($params);
 		}
 		curl_setopt($ch, CURLOPT_URL, $url);
 	}
