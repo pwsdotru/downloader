@@ -218,11 +218,17 @@ function download_url($url) {
  *  null|string "data" - body of response
  */
 function make_request($url, $method = "get", $params = array()) {
-
+	global $cookie_file;
+	if (empty($cookie_file) || $cookie_file === null) {
+		$cookie_file = tempnam( "/tmp", "CURLCOOKIE" );
+	}
 	$return = array("data" => null, "info" => null, "success" => false);
+
 	$ch = curl_init();
 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt ($ch, CURLOPT_COOKIEJAR, $cookie_file);
+	curl_setopt ($ch, CURLOPT_COOKIEFILE, $cookie_file);
 
 	if ($method == "post") {
 		curl_setopt($ch, CURLOPT_URL, $url);
