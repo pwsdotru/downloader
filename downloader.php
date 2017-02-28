@@ -47,6 +47,19 @@ if ($argc <= 1) {
 		    debug_out("Download success. Try save");
 	    } else {
 		    debug_out("Download fail. Try login and download again");
+		    if (isset($arguments["c"])) {
+			    $config_file = $arguments["c"];
+			    if (file_exists($config_file)) {
+				    $settings = parse_ini_file($config_file);
+				    debug_out("Login settings: ", $settings);
+			    } else {
+				    echo("ERROR: Not found config file " . $config_file);
+				    exit();
+			    }
+		    } else {
+			    echo("ERROR: Can't login. Need config file for information\n");
+			    exit();
+		    }
 	    }
 	  }
   } else {
