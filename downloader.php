@@ -27,16 +27,16 @@ if ($argc <= 1) {
   show_banner($script_filename, $params);
 } else {
   $arguments = parse_arguments($argv, $keys = parse_keys($params));
-	if (isset($arguments["d"]) || isset($arguments["debug"])) {
+	if (isset($arguments["d"])) {
 		define("DEBUG_MODE", true);
 		debug_out("Turn debug mode to on");
 	} else {
 		define("DEBUG_MODE", false);
 	}
   if ($arguments && is_array($arguments) && count($arguments) > 0) {
-    if (isset($arguments["h"]) || isset($arguments["help"])) {
+    if (isset($arguments["h"])) {
       show_banner($script_filename, $params, false);
-    } elseif (isset($arguments["v"]) || isset($arguments["version"])) {
+    } elseif (isset($arguments["v"])) {
       show_version();
     } else {
 	    debug_out("Parsed arguments", $arguments);
@@ -112,7 +112,7 @@ function parse_arguments($cmd, $keys) {
       $value = "";
     }
     if (isset($keys[$type][$key])) {
-      $out[$key] = $value;
+      $out[$keys[$type][$key]["alias"]] = $value;
     }
   }
   return $out;
@@ -134,10 +134,10 @@ function parse_keys($params) {
     }
     $key_data = explode("|", $key);
     if (isset($key_data[0])) {
-      $keys["short"][$key_data[0]] = $need_value;
+      $keys["short"][$key_data[0]] = array("need_value" => $need_value, "alias" => $key_data[0]);
     }
     if (isset($key_data[1])) {
-      $keys["long"][$key_data[1]] = $need_value;
+      $keys["long"][$key_data[1]] = array("need_value" => $need_value, "alias" => $key_data[0]);
     }
   }
   return $keys;
@@ -185,7 +185,6 @@ function debug_out($str, $var = null) {
 function download_url($url) {
 	$data = null;
 	$download = make_request($url);
-	print_r($download);
 	if ($download["success"] && $download["info"]["content_type"] != "text/html") {
 		$data = $download["data"];
 	} else {
