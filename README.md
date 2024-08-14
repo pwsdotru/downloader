@@ -1,6 +1,6 @@
 # Downloader
 
-Application for download (with auth) files from sites
+Application for download (with auth) files from sites on Bitrix
 
 <pre>
 Usage: downloader.php [OPTIONS] [URL]
